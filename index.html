@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>kata klasik</title>
+    <style>
+        body { background-color: #121212; color: white; font-family: sans-serif; margin: 0; height: 100dvh; overflow: hidden; }
+
+        .screen { width: 100%; height: 100dvh; display: none; flex-direction: column; align-items: center; box-sizing: border-box; }
+        
+        /* Background abu-abu untuk menu, posisi tulisan di atas */
+        #main-menu { font-size: 70%;
+            display: flex; 
+            background-color: #555555; 
+            justify-content: flex-start; 
+            padding-top: 60px; 
+        }
+
+        .menu-btn { padding: 15px 30px; margin: 10px; font-size: 18px; cursor: pointer; background: #333; color: white; border: none; border-radius: 8px; width: 250px; }
+        .menu-btn:hover { background: #444; }
+        
+        /* Container tombol agar jarak dari judul pas */
+        .menu-buttons { margin-top: 40px; display: flex; flex-direction: column; align-items: center; }
+
+        #header { width: 100%; max-width: 400px; display: grid; grid-template-columns: 80px 1fr 80px; align-items: start; margin-top: 25px; margin-bottom: 20px; padding: 0 10px; box-sizing: border-box; }
+        #controls-left { display: flex; flex-direction: column; align-items: flex-start; gap: 18px; }
+        #controls-right { display: flex; flex-direction: column; align-items: flex-end; gap: 18px; }
+        #btn-menu, #btn-settings { background: none; border: none; cursor: pointer; padding: 0; display: flex; align-items: center; }
+        #btn-surrender { background-color: #ff4444; color: white; border: none; padding: 6px 12px; font-size: 12px; font-weight: bold; border-radius: 4px; cursor: pointer; visibility: hidden; }
+        #attempts { font-size: 14px; text-align: right; }
+        #header h3 { text-align: center; margin: 0; font-size: 75%; font-weight: 500; letter-spacing: 1px; }
+
+        #board-area { flex: 1; display: flex; justify-content: center; align-items: center; }
+        #controls-area { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; padding-bottom: 10px; width: 100%; }
+        #status-msg { font-size: 14px; height: 25px; text-align: center; margin-bottom: 15px; }
+        #btn-new-game { background: white; color: black; border: none; padding: 10px 20px; font-weight: bold; cursor: pointer; border-radius: 4px; margin-bottom: 10px; }
+        .hidden-btn { visibility: hidden; }
+        
+        .grid { display: grid; grid-template-rows: repeat(8, 40px); gap: 8px; }
+        .row { display: grid; grid-template-columns: repeat(5, 40px); gap: 8px; transition: transform 0.1s; }
+        .box { width: 40px; height: 40px; border: 2px solid #333; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 22px; text-transform: uppercase; }
+        .hidden { display: none; }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-5px); }
+            40% { transform: translateX(5px); }
+            60% { transform: translateX(-5px); }
+            80% { transform: translateX(5px); }
+        }
+        .shake { animation: shake 0.4s; }
+
+        .keyboard { display: flex; flex-direction: column; gap: 6px; width: 100%; max-width: 400px; }
+        .key-row { display: flex; justify-content: center; gap: 4px; }
+        button.key { padding: 10px 5px; background: #333; color: white; border: none; border-radius: 4px; flex: 1; font-weight: bold; font-size: 14px; }
+        button.wide { flex: 1.5; }
+
+        .modal-overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.6); z-index: 100; justify-content: center; align-items: center; }
+        .modal-box { background: #1e1e1e; border: 1px solid #333; padding: 20px; border-radius: 12px; text-align: center; width: 80%; max-width: 300px; }
+        .modal-buttons { display: flex; justify-content: space-between; margin-top: 20px; gap: 10px; }
+        .btn-modal { background: rgba(255,255,255,0.75); color: black; border: none; padding: 8px 15px; border-radius: 5px; font-weight: bold; font-size: 14px; cursor: pointer; flex: 1; }
+        .settings-title { font-size: 14px; color: #aaa; margin: 15px 0 8px 0; font-weight: bold; text-align: left; }
+        .settings-btn { display: block; width: 100%; padding: 10px; margin-bottom: 8px; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 6px; cursor: pointer; font-size: 14px; text-align: center; }
+        .settings-btn.active { background: #444; border-color: #666; font-weight: bold; }
+        .num-row { display: flex; justify-content: space-between; gap: 6px; margin-bottom: 15px; }
+        .num-btn { flex: 1; padding: 8px 0; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: bold; }
+        .num-btn.active { background: #444; border-color: #666; }
+        .btn-close-settings { margin-top: 10px; background: white; color: black; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; }
+    </style>
+</head>
+<body>
+
+<div id="main-menu" class="screen" style="display: flex;">
+    <h1>TEBAK KATA</h1>
+    <div class="menu-buttons">
+        <button class="menu-btn" onclick="showGame('katla')">kata klasik</button>
+        <button class="menu-btn" onclick="alert('Coming soon!')">belum ada</button>
+    </div>
+</div>
+
+<div id="game-katla" class="screen">
+    <div id="header">
+        <div id="controls-left">
+            <button id="btn-menu" onclick="goBackToMenu()">
+                <svg viewBox="0 0 24 24" width="30" height="30" fill="white">
+                    <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+                </svg>
+            </button>
+            <button id="btn-surrender" onclick="toggleModal(true)">Menyerah</button>
+        </div>
+        <h3>KATA KLASIK</h3>
+        <div id="controls-right">
+            <button id="btn-settings" onclick="toggleSettings(true)">
+                <svg viewBox="0 0 24 24" width="30" height="30" fill="white">
+                    <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+                </svg>
+            </button>
+            <div id="attempts">Sisa: 8</div>
+        </div>
+    </div>
+    
+    <div id="board-area"><div class="grid" id="board"></div></div>
+    
+    <div id="controls-area">
+        <div id="status-msg"></div>
+        <button id="btn-new-game" class="hidden-btn" onclick="resetGame()">Mulai Baru</button>
+        <div class="keyboard" id="keyboard"></div>
+    </div>
+</div>
+
+<!-- (Sisa kode modal dan script tetap sama, tidak saya ubah) -->
+<div id="modal-overlay" class="modal-overlay">
+    <div class="modal-box">
+        <p>Apakah anda yakin ingin menyerah?</p>
+        <div class="modal-buttons">
+            <button class="btn-modal" onclick="toggleModal(false)">Tidak</button>
+            <button class="btn-modal" onclick="confirmSurrender()">Oke</button>
+        </div>
+    </div>
+</div>
+
+<div id="settings-overlay" class="modal-overlay">
+    <div class="modal-box" style="text-align: left;">
+        <div class="settings-title">Pilih Bahasa</div>
+        <button class="settings-btn active" id="lang-id" onclick="changeLanguage('id')">Indonesia</button>
+        <button class="settings-btn" id="lang-en" onclick="changeLanguage('en')">Inggris</button>
+        <div style="margin-top: 20px;"></div>
+        <div class="settings-title">Pilih Jumlah Huruf</div>
+        <div class="num-row">
+            <button class="num-btn active" onclick="changeLength(this, 5)">5</button>
+            <button class="num-btn" onclick="changeLength(this, 6)">6</button>
+            <button class="num-btn" onclick="changeLength(this, 7)">7</button>
+            <button class="num-btn" onclick="changeLength(this, 8)">8</button>
+            <button class="num-btn" onclick="changeLength(this, 9)">9</button>
+        </div>
+        <button class="btn-close-settings" onclick="toggleSettings(false)">Tutup</button>
+    </div>
+</div>
+
+<script>
+    function showGame(game) {
+        document.getElementById('main-menu').style.display = 'none';
+        document.getElementById('game-katla').style.display = 'flex';
+        initGame();
+    }
+    function goBackToMenu() {
+        document.getElementById('game-katla').style.display = 'none';
+        document.getElementById('main-menu').style.display = 'flex';
+    }
+    function toggleSettings(show) { document.getElementById('settings-overlay').style.display = show ? 'flex' : 'none'; }
+    function changeLanguage(lang) {
+        document.getElementById('lang-id').classList.remove('active');
+        document.getElementById('lang-en').classList.remove('active');
+        document.getElementById('lang-' + lang).classList.add('active');
+    }
+    function changeLength(element, length) {
+        const buttons = document.querySelectorAll('.num-btn');
+        buttons.forEach(btn => btn.classList.remove('active'));
+        element.classList.add('active');
+    }
+
+    const dictionary = ["ABADI", "ACARA", "AKTIF", "AKSES", "AMBIL", "ANTAR", "BADAI", "BADAN", "BAHAN", "BATIK", "BEBAS", "BEKAL", "BENAR", "BENDA", "BENIH", "BERAT", "BESAR", "BESOK", "BETON", "BIASA", "BIBIR", "BIDAN", "BIKIN", "BILIK", "BIOLA", "BISIK", "BOBOT", "BOLEH", "BOSAN", "BUAYA", "BUKIT", "BUKTI", "BULAN", "BUNGA", "BUNYI", "BURUH", "BURUK", "BUSUR", "BUTIR", "CABAI", "CABUT", "CACAT", "CAKAP", "CALON", "CAMAT", "CAPAI", "CATAT", "CAWAN", "CEKIK", "CELAH", "CEMAS", "CERAH", "CERIA", "CETAK", "CIPTA", "CITRA", "CUACA", "CUKUP", "CURAH", "DALAM", "DAMAI", "DAMAR", "DANAU", "DAPAT", "DARAH", "DARAT", "DEBAT", "DEBIT", "DEKAT", "DEKAP", "DEMAM", "DENDA", "DERAS", "DERET", "DETAK", "DETIK", "DEWAN", "DIKSI", "DINAS", "DUDUK", "DUNIA", "DUSUN", "EGOIS", "ELEGI", "GIGIT", "GURUH", "HAFAL", "HARGA", "HARUM", "HASIL", "HEMAT", "HIBUR", "HIDUP", "HIJAU", "HITAM", "HUKUM", "HUTAN", "IKLAN", "INDAH", "INPUT", "INTAN", "IRAMA", "ISENG", "ISLAH", "JAGAT", "JALAN", "JAMBU", "JAMIN", "JANJI", "JARAK", "JARUM", "JATUH", "JAWAB", "JELAS", "JELMA", "JERIH", "JINAK", "JOGET", "JUDUL", "JUJUR", "JULUK", "JUMPA", "KABAR", "KABUT", "KADAR", "KAKAK", "KALAU", "KALBU", "KAMAR", "KAMUS", "KAPAN", "KANTA", "KAPAL", "KARAM", "KASUR", "KAWAN", "KAYAK", "KEDAI", "KELAS", "KELIR", "KENAL", "KERAS", "KERJA", "KESAN", "KETAT", "KIMIA", "KIRIM", "KISAH", "KITAB", "KORAN", "KOTAK", "KRIDA", "KRIYA", "KUASA", "KULIT", "KUMAN", "KUNCI", "KURAS", "KURSI", "LAHIR", "LAMPU", "LAPAR", "LARAS", "LATAR", "LAWAN", "LAYAR", "LEBAT", "LELAH", "LEMAK", "LETAK", "LEVEL", "LIHAT", "LIRIK", "LOKAL", "LOMBA", "LUKIS", "LUNAK", "LURUS", "MABUK", "MADYA", "MAKAN", "MAMPU", "MANDI", "MANIS", "MARAH", "MASAK", "MASUK", "MAWAR", "MENIT", "MERAH", "MESTI", "MESIN", "MINAT", "MINUM", "MIRIP", "MODAL", "MODEL", "MOMEN", "MORAL", "MOTIF", "MOTOR", "MUDIK", "MULAI", "MULIA", "MULUT", "MURAH", "MURID", "MUSIM", "NAFAS", "NAKAS", "NAMUN", "NASIB", "NATAL", "NEKAT", "NETRA", "NILAI", "NOMOR", "NYALA", "NYATA", "OMPOL", "OPINI", "ORANG", "PACAR", "PADAM", "PADAT", "PAGAR", "PAHAM", "PAJAK", "PAKAI", "PAKET", "PALSU", "PANAS", "PANEL", "PAPAN", "PARAF", "PARIT", "PARUH", "PASAR", "PASIF", "PASIR", "PATEN", "PATUH", "PECAH", "PEDAL", "PEDAS", "PEGAS", "PELAN", "PENUH", "PERAH", "PERAS", "PERLU", "PESAN", "PETAK", "PIALA", "PIANO", "PIKAT", "PIKIR", "PILAH", "PILOT", "PINTU", "PISAU", "POHON", "POLIO", "POLIS", "PORSI", "PRIMA", "PROMO", "PROSA", "PUISI", "PULAU", "PULSA", "PUNCA", "PURBA", "PUSAT", "PUTIH", "PUTRA", "QURAN", "RABUN", "RACIK", "RADAR", "RADIO", "RAKIT", "RAMAI", "RAMBU", "RANAH", "RANCU", "RAPAT", "RASIO", "RATAP", "REBAH", "REBUS", "REMAH", "RENDA", "REUNI", "RICUH", "RINDU", "RISAU", "RITME", "RIVAL", "ROKET", "RUKUN", "RUMAH", "RUMUS", "RUSAK", "SABAR", "SABUN", "SADAR", "SAKIT", "SALAH", "SALJU", "SALON", "SALUR", "SAMAR", "SANTA", "SARAN", "SARAT", "SASAR", "SAWAH", "SEBAB", "SEGAR", "SEKAT", "SELAM", "SELAT", "SEMUA", "SENAM", "SENDA", "SENJA", "SERAK", "SERAM", "SERAT", "SERBU", "SERTA", "SESAK", "SETIA", "SETOR", "SIANG", "SIAPA", "SIFAT", "SIKAP", "SIKAT", "SIKSA", "SILAT", "SIMAK", "SINAR", "SINGA", "SIPIL", "SIRAM", "SISIR", "SITUS", "SKALA", "SKEMA", "SOBAT", "SOLAR", "SOLID", "SONAR", "SOPAN", "SORAK", "SOSOK", "SPASI", "START", "STUDI", "STRES", "SUARA", "SUDAH", "SUJUD", "SULIT", "SULUH", "SUMBU", "SURAT", "SURYA", "SUSUN", "SUTRA", "TABAH", "TABEL", "TABIK", "TABIR", "TAHAN", "TAHAP", "TAHUN", "TAJAM", "TAKAR", "TAKUT", "TALAK", "TAMAN", "TANAH", "TANAK", "TANAM", "TANDA", "TANPA", "TAPAK", "TARIF", "TARIK", "TATAP", "TAWAR", "TEBAK", "TEBAS", "TEGAK", "TEGAS", "TEGUK", "TEKAD", "TEKAN", "TEKUN", "TELAN", "TELAT", "TELUR", "TEMAN", "TEMPA", "TENAR", "TENDA", "TENIS", "TENUN", "TEPAT", "TEPUK", "TERAS", "TERUS", "TEWAS", "TIANG", "TIDAK", "TIDUR", "TIKAM", "TIKET", "TIMAH", "TIMBA", "TIMUR", "TINTA", "TIRAI", "TITIK", "TOKOH", "TOLAK", "TOLEH", "TOMAT", "TORSI", "TOTAL", "TREND", "TULIS", "TUNAI", "TUNAS", "TUNDA", "TURUN", "TUTUP", "UDARA", "UJIAN", "ULAMA", "UNDUR", "UNSUR", "UNTUK", "UPAYA", "USAHA", "UTAMA", "UTANG", "UTARA", "VALID", "VARIA", "VENUS", "VIDEO", "VILLA", "VIRUS", "VISUM", "VITAL", "VOKAL", "VONIS", "WADAH", "WAJAH", "WAJAR", "WAKAF", "WAKIL", "WAKTU", "WALET", "WARAS", "WARGA", "WARNA", "WARTA", "WASIT", "WATAK", "WIDYA", "WINDU", "WISMA", "WUDHU", "MALAM", "MALAS", "LAPAR", "ECENG", "FOBIA", "KIMIA", "ONCOM", "BALU", "BELUT", "BELOK", "BELOT", "GADIS", "KAPAN", "PAPAN", "DAMAR", "KOBOI", "OMBAK", "TOBAT", "LOBAK", "DOMBA", "JANUR", "JALUR", "SARAF", "CAWAT", "SAJAK", "BALAI", "KAWAT", "WALAU", "DEPAN", "LEGAL", "TETAP", "KALAH", "KIPAS", "JAJAH", "LEBAM", "INTRO", "SEDAP", "DEDAK", "DERAI", "SADIS", "SAKSI", "SIBUK", "SIPUT",  "SINUS", "SIRUP", "SiKUT", "SENTI", "SENSI", "FINIS", "ISTRI", "ISING", "ISLAM", "SEHAT", "SEJAK", "SESAT", "SYAIR", "SALTO", "SALDO", "PALEM", "KALEM", "BIHUN", "IBLIS", "IKLIM", "KLIEN", "ALIEN", "AGAMA", "ALARM", "ANEKA", "ARENA", "ALBUM",  "ALIAS", "ALTER", "GLOBE", "HIMNE", "THETA", "INTIM", "INTER", "MITOS", "PEYOT", "BETOT", "YATIM", "ELING", "PLUTO", "ARTIS", "ARSIP", "ARGON", "TIRTA", "MITRA", "PUTRI", "ROMAN", "EYANG", "ENTAH", "EMISI", "EDISI", "SUNYI", "SEPUH", "SEKOP", "ULUNG", "URUNG", "ELANG", "OLENG", "OPONG", "OYONG", "OBENG", "KORAL", "BOCAH", "BACOK", "BACOT", "CIDUK", "CICIL",  "LIRIS", "KIKIL", "LICIK", "BINTI", "BIBIT", "DIDIH", "DIGIT", "HILIR", "NIHIL", "SIDIK", "SISIP", "CICIP", "LILIN", "INANG", "JIJIK", "PIPIS", "TIPIS", "KIKIR", "GIGIH", "INGIN", "AMINO", "PIPIT", "LIMIT", "MIMIK",  "MANIS", "ZIKIR", "LIPIT", "MUSIK", "IBRIT", "KOPLO", "MIMPI", "FISIK", "FIKSI", "INJIL", "WINDI", "WIDIH", "BIJIH", "INTIP", "FIKIR", "JILID", "VIVID", "TIRIS", "RISIH", "RISIK", "CIBIR", "SIHIR", "SIPIR", "CICIT", "PIPIH", "PILIH", "JOULE", "GIMIK", "PELIK", "DELIK", "BELIT", "MILIK", "SILIH", "LEMAH", "LULUS", "LOLOS", "LEMBU", "LECET", "LUCUT", "PARAS", "SAYAP", "LALAT", "RANAI", "NANAS", "NANAR", "RAWAT", "PAPAR", "DADAR", "CACAR", "RALAT", "RAMAH", "RAWAN", "MAHAR", "SABTU", "BABAK", "GAGAH", "PANCA", "SANCA", "KAMIS", "PANIR", "BAKSO", "PAKIS", "SAKTI", "PANIK", "PAKSA", "JAKSA", "DAKSA", "JAKET", "PUASA", "NYERI", "NGERI", "CANDA", "CAGAR", "CERNA", "NYAWA", "KARIM", "LAZIM", "KOREK", "KEROK", "TEROR", "KEONG", "NYALI", "NGILU", "BABON", "BALIK", "YAKIN", "YAKNI", "INTEL", "KAFIR", "KARIR", "KARIP", "LABIL", "LABEL", "FABEL", "MAYOR", "BUYAR", "BAYAR", "BAZAR", "KEBAB", "IMPOR", "MIKRO", "MAKRO", "MAKRO", "SELIR", "SEMIR", "SEMUR", "BOROS", "PASAK", "GARUT", "VIRGO", "KARGO", "TULIP", "TULUS", "DONOR", "HOROR", "RUMOR", "TUMOR", "GEGER", "JEJER", "TELER", "BEBEK", "BECEK", "LEHER", "LELEH", "LELET", "RECEH", "PECEK", "PESEK", "NENEK", "JEWER", "BIJAK", "GESEK", "RESEH", "SEREH", "KEKER", "TEHEL", "ELENG", "PEPES", "MEREM", "MEREK", "SEMEN", "MESES", "BACEM", "SERET", "BERES", "BEREL", "CEPER", "BEBER", "MEWEK", "EMBER", "TETES", "PELEH", "GEMEN", "KOTOR", "BESEK", "WESEL", "TEMPE", "CECEH", "KEKEH", "PECEL", "BACEM", "CINTA", "MINTA", "MANTU", "PINTA", "BANDO", "POMPA"];
+
+    let secretWord, attempts, currentRow, currentInput, gameOver;
+    const board = document.getElementById('board');
+    const statusMsg = document.getElementById('status-msg');
+    const btnNewGame = document.getElementById('btn-new-game');
+    const btnSurrender = document.getElementById('btn-surrender');
+    const modal = document.getElementById('modal-overlay');
+
+    function initGame() {
+        secretWord = dictionary[Math.floor(Math.random() * dictionary.length)];
+        attempts = 8;
+        currentRow = 0;
+        currentInput = "";
+        gameOver = false;
+        document.getElementById('attempts').innerText = "Sisa: 8";
+        statusMsg.innerText = "";
+        board.innerHTML = "";
+        btnNewGame.classList.add('hidden-btn'); 
+        btnSurrender.style.visibility = 'hidden';
+        for (let i = 0; i < 8; i++) {
+            const row = document.createElement('div');
+            row.className = 'row ' + (i === 0 ? '' : 'hidden');
+            row.id = 'row-' + i;
+            for (let j = 0; j < 5; j++) {
+                const box = document.createElement('div');
+                box.className = 'box';
+                row.appendChild(box);
+            }
+            board.appendChild(row);
+        }
+    }
+
+    function toggleModal(show) { modal.style.display = show ? 'flex' : 'none'; }
+
+    function confirmSurrender() {
+        toggleModal(false);
+        statusMsg.innerHTML = `MENYERAH - Kata: <span style="color:white">${secretWord}</span>`;
+        statusMsg.style.color = "#ff4444";
+        gameOver = true;
+        btnNewGame.classList.remove('hidden-btn');
+        btnSurrender.style.visibility = 'hidden';
+    }
+
+    function resetGame() { initGame(); }
+
+    function handleInput(key) {
+        if (gameOver) return;
+        if (key === "ENTER") {
+            if (currentInput.length === 5) checkWord();
+            else statusMsg.innerText = "Harus 5 huruf!";
+        } else if (key === "DEL") {
+            currentInput = currentInput.slice(0, -1);
+            statusMsg.innerText = "";
+            updateBoard();
+        } else if (currentInput.length < 5) {
+            currentInput += key;
+            statusMsg.innerText = "";
+            updateBoard();
+        }
+    }
+
+    function updateBoard() {
+        const boxes = document.getElementById('row-' + currentRow).querySelectorAll('.box');
+        for (let i = 0; i < 5; i++) boxes[i].innerText = currentInput[i] || "";
+    }
+
+    function checkWord() {
+        if (!dictionary.includes(currentInput)) {
+            statusMsg.innerText = "Tidak ada di kamus!";
+            statusMsg.style.color = "orange";
+            const rowEl = document.getElementById('row-' + currentRow);
+            rowEl.classList.add('shake');
+            setTimeout(() => rowEl.classList.remove('shake'), 400);
+            return;
+        }
+        statusMsg.style.color = "white";
+        attempts--;
+        document.getElementById('attempts').innerText = "Sisa: " + attempts;
+        const rowEl = document.getElementById('row-' + currentRow);
+        const boxes = rowEl.querySelectorAll('.box');
+        let tempSecret = secretWord.split('');
+        for(let i=0; i<5; i++) {
+            if(currentInput[i] === secretWord[i]) {
+                boxes[i].style.backgroundColor = "green";
+                tempSecret[i] = null;
+            }
+        }
+        for(let i=0; i<5; i++) {
+            if(boxes[i].style.backgroundColor !== "green") {
+                if(tempSecret.includes(currentInput[i])) {
+                    boxes[i].style.backgroundColor = "orange";
+                    tempSecret[tempSecret.indexOf(currentInput[i])] = null;
+                } else {
+                    boxes[i].style.backgroundColor = "#333";
+                }
+            }
+        }
+        if (currentInput === secretWord) {
+            statusMsg.innerText = "MENANG!";
+            statusMsg.style.color = "#4CAF50";
+            gameOver = true;
+            btnNewGame.classList.remove('hidden-btn'); 
+            btnSurrender.style.visibility = 'hidden';
+        } else if (attempts === 0) {
+            statusMsg.innerHTML = `GAME OVER - Kata: <span style="color:white">${secretWord}</span>`;
+            statusMsg.style.color = "#ff4444";
+            gameOver = true;
+            btnNewGame.classList.remove('hidden-btn');
+            btnSurrender.style.visibility = 'hidden';
+        } else {
+            currentRow++;
+            document.getElementById('row-' + currentRow).classList.remove('hidden');
+            currentInput = "";
+            if (currentRow > 0) btnSurrender.style.visibility = 'visible';
+        }
+    }
+
+    const keys = [["Q","W","E","R","T","Y","U","I","O","P"], ["A","S","D","F","G","H","J","K","L"], ["ENTER","Z","X","C","V","B","N","M","DEL"]];
+    keys.forEach(rowArr => {
+        const rowDiv = document.createElement('div');
+        rowDiv.className = 'key-row';
+        rowArr.forEach(k => {
+            const btn = document.createElement('button');
+            btn.innerText = k;
+            btn.className = "key" + (k === "ENTER" || k === "DEL" ? " wide" : "");
+            btn.onclick = () => handleInput(k);
+            rowDiv.appendChild(btn);
+        });
+        document.getElementById('keyboard').appendChild(rowDiv);
+    });
+</script>
+</body>
+</html>
